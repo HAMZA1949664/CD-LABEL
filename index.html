@@ -92,6 +92,8 @@ kbd { border: 1px solid var(--bord-fort); border-bottom-width: 2px; border-radiu
 .entete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .pastille { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; border: 1px solid #3f3f46; background: #27272a; color: #d4d4d8; white-space: nowrap; }
 .pastille-or { background: var(--or); border-color: var(--or); color: #fff; }
+.pastille-ok { border-color: #15803d; color: #86efac; }
+.pastille-attente { border-color: #f59e0b; color: #fcd34d; }
 .btn-icone { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: #d4d4d8; cursor: pointer; }
 .btn-icone:hover { background: #27272a; color: #fff; }
 .btn-icone .point { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 0 2px #18181b; }
@@ -325,10 +327,11 @@ footer.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 
       <h1>Étiquettes &amp; colisage</h1>
     </div>
     <div class="entete-actions">
+      <span class="pastille" id="pastille-cloud" hidden></span>
       <span class="pastille" id="pastille-catalogue">Catalogue…</span>
       <span class="pastille pastille-or">Zebra Designer Essentials 3</span>
       <button type="button" class="btn-icone" id="btn-theme" aria-label="Changer de thème" title="Mode clair / sombre"></button>
-      <button type="button" class="btn-icone" id="btn-imprimante" aria-label="Préférences d'imprimante" title="Préférences d'imprimante"></button>
+      <button type="button" class="btn-icone" id="btn-imprimante" aria-label="Préférences (site, imprimante)" title="Préférences (site, imprimante)"></button>
       <button type="button" class="btn-icone" id="btn-aide" aria-label="Mode d'emploi" title="Mode d'emploi"></button>
     </div>
   </div>
@@ -459,9 +462,10 @@ footer.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 
         <div class="carte-entete">
           <h2><span data-icone="history">Dernières générations</span>
             <button type="button" id="btn-purger" class="btn-mini danger" aria-label="Vider tout le journal" title="Vider tout le journal"></button></h2>
-          <p>Journal enregistré dans ce navigateur. La flèche circulaire remet un lot dans la file d'impression.</p>
+          <p>Journal de ce poste. La flèche circulaire remet un lot dans la file d'impression. Chaque génération est aussi enregistrée dans Supabase.</p>
         </div>
         <div class="carte-corps pile">
+          <button type="button" id="btn-export-supabase" class="btn btn-large" hidden><span data-icone="sheet">Télécharger l'historique complet (tous les postes)</span></button>
           <input id="recherche-journal" class="saisie" type="search" placeholder="Filtrer par fichier, modèle ou OF…" aria-label="Filtrer le journal">
           <ul id="journal-liste" class="liste journal" aria-label="Journal des générations"></ul>
           <p id="journal-vide" class="vide-bloc">Aucune génération pour l'instant.</p>
@@ -538,7 +542,7 @@ footer.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 
   </section>
 </main>
 
-<footer class="pied">Étiquettes .NLBL à données intégrées · Colisage par scan · Page autonome : tout est calculé dans le navigateur, aucune donnée n'est envoyée.</footer>
+<footer class="pied">Étiquettes .NLBL à données intégrées · Colisage par scan · Fichiers calculés dans le navigateur · Générations enregistrées dans Supabase.</footer>
 
 <!-- ================================================================
      FENÊTRES
@@ -562,11 +566,19 @@ footer.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 
 <dialog id="dlg-imprimante" aria-labelledby="dlg-imprimante-titre">
   <form method="dialog" class="dlg">
     <div class="dlg-entete">
-      <h3 id="dlg-imprimante-titre"><span data-icone="sliders">Préférences d'imprimante</span></h3>
-      <p>Choisit l'imprimante cible intégrée aux fichiers .NLBL. Seuls les réglages d'impression changent — le design du modèle n'est jamais modifié.</p>
+      <h3 id="dlg-imprimante-titre"><span data-icone="sliders">Préférences de ce poste</span></h3>
+      <p>Le site est enregistré avec chaque génération dans Supabase. L'imprimante cible est intégrée aux fichiers .NLBL — le design du modèle n'est jamais modifié.</p>
       <button type="submit" value="annuler" class="btn-mini dlg-fermer" aria-label="Fermer" data-icone="x"></button>
     </div>
     <div class="dlg-corps pile">
+      <div class="champ">
+        <label for="imp-site">Site / atelier de ce poste</label>
+        <input id="imp-site" class="saisie" maxlength="60" list="sites-connus" placeholder="Site web" autocomplete="off">
+        <datalist id="sites-connus">
+          <option value="France — Clément Design (Carros)"></option><option value="Tunisie — NASSTEX"></option><option value="Tunisie — Archipel"></option>
+        </datalist>
+        <p class="aide">Permet de savoir qui a généré quoi dans l'historique. Vide = « Site web ».</p>
+      </div>
       <label class="bloc-bascule" for="imp-active">
         <span><strong>Personnaliser l'imprimante</strong><small>Sinon, le fichier cible « ZDesigner GK420d » (valeur du modèle).</small></span>
         <input type="checkbox" id="imp-active" class="interrupteur" role="switch">
@@ -592,6 +604,32 @@ footer.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 
     <div class="dlg-pied">
       <button type="submit" value="annuler" class="btn btn-fantome">Annuler</button>
       <button type="button" id="imp-enregistrer" class="btn btn-principal">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-export" aria-labelledby="dlg-export-titre">
+  <form method="dialog" class="dlg">
+    <div class="dlg-entete">
+      <h3 id="dlg-export-titre"><span data-icone="sheet">Historique des générations</span></h3>
+      <p>Télécharge toutes les étiquettes générées (tous les postes, enregistrées dans Supabase) dans un fichier CSV pour Excel : date, heure, site, FAB / SPE, modèle, couleur, taille, OF, code-barres, quantité.</p>
+      <button type="submit" value="annuler" class="btn-mini dlg-fermer" aria-label="Fermer" data-icone="x"></button>
+    </div>
+    <div class="dlg-corps pile">
+      <div class="champ">
+        <label for="exp-code">Code d'accès</label>
+        <input id="exp-code" class="saisie mono" type="password" autocomplete="off" placeholder="CD-XXXX-XXXX-XXXX">
+        <label class="aide" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="exp-memoriser"> Mémoriser le code sur ce poste</label>
+      </div>
+      <div class="grille-2">
+        <div class="champ"><label for="exp-depuis">Du <span class="aide">(facultatif)</span></label><input id="exp-depuis" class="saisie" type="date"></div>
+        <div class="champ"><label for="exp-jusqua">Au <span class="aide">(facultatif)</span></label><input id="exp-jusqua" class="saisie" type="date"></div>
+      </div>
+      <p id="exp-erreur" class="alerte alerte-rouge" role="alert" hidden></p>
+    </div>
+    <div class="dlg-pied">
+      <button type="submit" value="annuler" class="btn btn-fantome">Annuler</button>
+      <button type="button" id="exp-ok" class="btn btn-principal"><span data-icone="download">Télécharger le CSV</span></button>
     </div>
   </form>
 </dialog>
@@ -622,13 +660,14 @@ footer.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 
         <li><span class="n">3</span><div><strong>Impression</strong><p>Ouvrez le .nlbl dans Zebra Designer 3 : les 7 variables sont déjà remplies. Réglez « Nombre d'étiquettes » puis imprimez.</p></div></li>
         <li><span class="n">4</span><div><strong>Imprimante cible</strong><p>Le fichier vise « ZDesigner GK420d » par défaut. Pour une autre imprimante, ouvrez les préférences (icône réglages) : le nom est intégré au .NLBL sans toucher au design.</p></div></li>
         <li><span class="n">5</span><div><strong>Ancien flux (.TXT)</strong><p>« Exporter le fichier .TXT » conserve le format Clé=valeur à charger via « Charger… » dans Zebra Designer.</p></div></li>
-        <li><span class="n">6</span><div><strong>Colisage</strong><p>Onglet « Colisage » : collez les codes scannés (ou importez un .txt/.csv), puis « Générer le colisage ». Regroupement OF → modèle → couleur → taille, quantités comptées, codes inconnus signalés, copie pour Excel et export CSV. « code×N » compte N pièces.</p></div></li>
+        <li><span class="n">6</span><div><strong>Historique (Supabase)</strong><p>Chaque génération est enregistrée dans la base Supabase : date, heure, site, FAB / SPE, code-barres, OF, quantité… « Télécharger l'historique complet » (carte Dernières générations) produit le fichier CSV de tous les postes, avec le code d'accès. Réglez le site de chaque poste dans les préférences.</p></div></li>
+        <li><span class="n">7</span><div><strong>Colisage</strong><p>Onglet « Colisage » : collez les codes scannés (ou importez un .txt/.csv), puis « Générer le colisage ». Regroupement OF → modèle → couleur → taille, quantités comptées, codes inconnus signalés, copie pour Excel et export CSV. « code×N » compte N pièces.</p></div></li>
       </ol>
       <div class="encadre encadre-or">
         <strong>Bon à savoir</strong>
         <ul>
-          <li>Tout est calculé dans le navigateur : la page fonctionne hors ligne, sans serveur.</li>
-          <li>Le journal, les derniers OF et les préférences sont enregistrés dans ce navigateur uniquement.</li>
+          <li>Les fichiers sont calculés dans le navigateur : la page fonctionne même hors ligne. Sans Internet, les générations attendent sur le poste (« Supabase · N en attente ») et partent automatiquement au retour du réseau.</li>
+          <li>Le journal de la page, les derniers OF et les préférences restent dans ce navigateur ; l'historique complet est dans Supabase.</li>
           <li>Les codes SPE générés sur ce poste sont mémorisés pour être reconnus au colisage ; sinon, saisissez l'OF du lot.</li>
           <li>Une étiquette strictement identique ajoutée à la file augmente la quantité de la ligne existante.</li>
         </ul>
@@ -6791,7 +6830,7 @@ Ce fichier a été généré automatiquement par l'application
     comparerTailles, trierTailles,
     // colisage
     MAX_CODES_COLISAGE, TAILLE_MAX_TEXTE_COLISAGE, extraireEntrees, totalPieces, developperEntrees,
-    trierLignesColisage, construireCsvColisage, indexSpePourOf, resoudreEtiquette, calculerColisage,
+    trierLignesColisage, construireCsvColisage, indexSpePourOf, champsDepuisCatalogue, resoudreEtiquette, calculerColisage,
     // import TXT
     TAILLE_MAX_TXT, MAX_IMPORT_TXT, analyserTxtImport,
   };
@@ -6805,16 +6844,28 @@ Ce fichier a été généré automatiquement par l'application
   "use strict";
 
   /* ------------------------------------------------------------------------
-     Connexion Supabase (FACULTATIVE)
-     Laissez vide pour utiliser le catalogue intégré à la page.
-     Pour lire le catalogue depuis Supabase : créez la table avec
-     supabase/articles.sql, puis renseignez l'URL du projet et la clé
-     publique (« anon » / « publishable » — jamais la clé service_role).
+     Connexion Supabase — projet « Label »
+     Chaque génération (.nlbl, lot .zip, .txt) est enregistrée dans la table
+     label_generations par la fonction enregistrer_generations (voir
+     supabase/generations.sql). Sans Internet, les lignes attendent sur le
+     poste et partent automatiquement au retour du réseau.
+     La clé est la clé PUBLIQUE (publishable) : elle ne permet ni de lire ni de
+     modifier la table — seulement d'ajouter des générations et d'exporter
+     l'historique avec le code d'accès. Ne jamais mettre la clé service_role.
+     Laisser url / cle vides désactive totalement Supabase.
      ------------------------------------------------------------------------ */
   const SUPABASE = {
-    url: "", // ex. "https://xxxxxxxx.supabase.co"
-    cle: "", // clé publique anon / publishable
-    table: "articles",
+    url: "https://aioikwyxftyozbhismsc.supabase.co",
+    cle: "sb_publishable_ioEq-ybjAG8gvQoMDxP8NQ_OSeq2JmG",
+    lireCatalogue: false, // true : catalogue lu depuis la table « articles » (supabase/articles.sql)
+    tableCatalogue: "articles",
+  };
+  /** Site / atelier par défaut (modifiable dans les préférences de chaque poste). */
+  const SITE_DEFAUT = "Site web";
+  const SITES_CONNUS = {
+    "France — Clément Design (Carros)": "france-hq",
+    "Tunisie — NASSTEX": "tn-nastex",
+    "Tunisie — Archipel": "tn-archipel",
   };
 
   const N = window.Noyau;
@@ -7005,11 +7056,10 @@ Ce fichier a été généré automatiquement par l'application
 
   async function chargerDepuisSupabase() {
     const base = SUPABASE.url.replace(/\/+$/, "");
-    const entetes = { apikey: SUPABASE.cle, Authorization: `Bearer ${SUPABASE.cle}` };
     const lignes = [];
     for (let debut = 0; ; debut += 1000) {
-      const url = `${base}/rest/v1/${encodeURIComponent(SUPABASE.table)}?select=article,couleur,taille,manche,code_barre&order=id.asc&limit=1000&offset=${debut}`;
-      const rep = await fetch(url, { headers: entetes });
+      const url = `${base}/rest/v1/${encodeURIComponent(SUPABASE.tableCatalogue)}?select=article,couleur,taille,manche,code_barre&order=id.asc&limit=1000&offset=${debut}`;
+      const rep = await fetch(url, { headers: entetesSupabase() });
       if (!rep.ok) throw new Error(`Supabase a répondu ${rep.status}`);
       const lot = await rep.json();
       for (const l of lot) lignes.push([l.article, l.couleur, l.taille, l.manche || "", l.code_barre]);
@@ -7021,7 +7071,7 @@ Ce fichier a été généré automatiquement par l'application
 
   async function chargerCatalogue() {
     const integre = JSON.parse($("#donnees-catalogue").textContent);
-    if (SUPABASE.url && SUPABASE.cle) {
+    if (SUPABASE.lireCatalogue && supabaseActif()) {
       try {
         installerCatalogue(await chargerDepuisSupabase(), "supabase");
         return;
@@ -7048,6 +7098,7 @@ Ce fichier a été généré automatiquement par l'application
     typeValue: "",
     spe: false,
     file: [], // { id, etiquette, ref, quantite }
+    site: lire("clement-site", ""),
     articlesRecents: lire("clement-articles-recents", []),
     ofsRecents: lire("clement-ofs-recents", []),
     imprimante: Object.assign({ active: false, nom: "", dpi: "203" }, lire("clement-imprimante", {})),
@@ -7086,6 +7137,8 @@ Ce fichier a été généré automatiquement par l'application
       else if (!mancheApplicable || manche) record = trouver(taille);
     }
     const etiquette = N.calculerEtiquette({ record, of, typeValue, spe });
+    // Référence brute (article, code couleur…) conservée pour l'enregistrement Supabase.
+    if (etiquette) etiquette.brut = { article: record[0], couleur: record[1], taille: record[2], manche: record[3], spe };
 
     // Une étiquette par taille (saisie de quantité par taille) — hors SPE.
     let pairesTailles = [];
@@ -7093,6 +7146,7 @@ Ce fichier a été généré automatiquement par l'application
       pairesTailles = taillesList.flatMap((t) => {
         const rec = trouver(t);
         const e = rec ? N.calculerEtiquette({ record: rec, of, typeValue, spe: false }) : null;
+        if (e) e.brut = { article: rec[0], couleur: rec[1], taille: rec[2], manche: rec[3], spe: false };
         return e && N.ean13Valide(e.codeBarre) ? [{ taille: t, etiquette: e }] : [];
       });
     }
@@ -7377,11 +7431,13 @@ Ce fichier a été généré automatiquement par l'application
   }
 
   /**
-   * Mémoire permanente des codes générés (équivalent de la table LabelRecord) :
-   * les codes SPE / hors catalogue sont relus au colisage avec leur OF.
-   * Les codes FAB n'y sont pas stockés (toujours retrouvés dans le catalogue).
+   * Résout chaque étiquette générée (FAB du catalogue, SPE recalculé, sinon
+   * EXT) et alimente la mémoire permanente des codes (équivalent de la table
+   * LabelRecord) : les codes SPE / hors catalogue sont relus au colisage avec
+   * leur OF. Les codes FAB n'y sont pas stockés (toujours dans le catalogue).
+   * Retourne les champs résolus (enregistrés ensuite dans Supabase).
    */
-  function memoriserEtiquettes(etiquettes) {
+  function resoudreEtMemoriser(etiquettes, bruts = []) {
     const memoire = lire(CLE_MEMOIRE, []);
     const connus = new Set(memoire.map((m) => m[0]));
     const speParCode = new Map();
@@ -7389,18 +7445,245 @@ Ce fichier a été généré automatiquement par l'application
       for (const [code, ligne] of indexSpe(of)) if (!speParCode.has(code)) speParCode.set(code, ligne);
     }
     let ajouts = 0;
-    for (const e of etiquettes) {
-      const c = N.resoudreEtiquette(e, catalogue.fabParCode, speParCode);
-      if (c.source === "FAB" || connus.has(c.codeBarre)) continue;
-      connus.add(c.codeBarre);
-      memoire.push([c.codeBarre, c.of, c.modele, c.couleur, c.couleurCode, c.taille, c.manche, c.source]);
-      ajouts++;
+    const champs = etiquettes.map((e, i) => {
+      // SPE issu du formulaire : article et code couleur exacts connus (même
+      // hors catalogue) ; sinon résolution FAB → SPE → EXT comme l'original.
+      const b = bruts[i];
+      const c =
+        b && b.spe
+          ? N.champsDepuisCatalogue({ article: b.article, couleur: b.couleur, taille: b.taille, manche: b.manche, codeBarre: e.codeBarre }, e.of, true)
+          : N.resoudreEtiquette(e, catalogue.fabParCode, speParCode);
+      if (c.source !== "FAB" && !connus.has(c.codeBarre)) {
+        connus.add(c.codeBarre);
+        memoire.push([c.codeBarre, c.of, c.modele, c.couleur, c.couleurCode, c.taille, c.manche, c.source]);
+        ajouts++;
+      }
+      return c;
+    });
+    if (ajouts) {
+      // Ordre chronologique (plus ancien d'abord) ; en cas de stockage plein,
+      // les codes les plus anciens sont abandonnés en premier.
+      let liste = memoire.slice(-MAX_MEMOIRE);
+      while (!ecrire(CLE_MEMOIRE, liste) && liste.length > 1) liste = liste.slice(Math.floor(liste.length / 2));
     }
-    if (!ajouts) return;
-    // Ordre chronologique (plus ancien d'abord) ; en cas de stockage plein,
-    // les codes les plus anciens sont abandonnés en premier.
-    let liste = memoire.slice(-MAX_MEMOIRE);
-    while (!ecrire(CLE_MEMOIRE, liste) && liste.length > 1) liste = liste.slice(Math.floor(liste.length / 2));
+    return champs;
+  }
+
+  // ------------------------------------------------------------------------
+  // Supabase : enregistrement de chaque génération (file d'attente hors ligne)
+  // ------------------------------------------------------------------------
+  const CLE_ATTENTE = "clement-cloud-attente";
+  const MAX_ATTENTE = 20000;
+  const TAILLE_LOT_ENVOI = 500;
+  let envoiEnCours = false;
+  let etatCloud = { ok: null, message: "" };
+  let alerteCloudAffichee = false;
+
+  function supabaseActif() {
+    return !!(SUPABASE.url && SUPABASE.cle);
+  }
+
+  function entetesSupabase() {
+    return { apikey: SUPABASE.cle, Authorization: `Bearer ${SUPABASE.cle}`, "Content-Type": "application/json" };
+  }
+
+  async function appelRpc(fonction, corps, parametres = "") {
+    let rep;
+    try {
+      rep = await fetch(`${SUPABASE.url.replace(/\/+$/, "")}/rest/v1/rpc/${fonction}${parametres}`, {
+        method: "POST",
+        headers: entetesSupabase(),
+        body: JSON.stringify(corps),
+      });
+    } catch (e) {
+      throw new Error("Connexion à Supabase impossible (Internet ?)");
+    }
+    if (!rep.ok) {
+      let message = `Supabase a répondu ${rep.status}`;
+      try {
+        const j = await rep.json();
+        if (j && j.message) message = j.message;
+      } catch (e) {
+        // réponse sans JSON
+      }
+      const erreur = new Error(message);
+      erreur.status = rep.status;
+      throw erreur;
+    }
+    const texte = await rep.text();
+    return texte ? JSON.parse(texte) : null;
+  }
+
+  function identifiantUnique() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    const b = window.crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  }
+
+  function siteCourant() {
+    const label = (etat.site || "").trim() || SITE_DEFAUT;
+    return { id: SITES_CONNUS[label] || `web-${N.slug(label, 40).toLowerCase()}`, label };
+  }
+
+  /** Une ligne par étiquette générée : file d'attente locale puis envoi. */
+  function enregistrerDansSupabase(champs, etiquettes, quantites, fichier) {
+    if (!supabaseActif()) return;
+    const { id, label } = siteCourant();
+    const genereAt = new Date().toISOString();
+    const lignes = champs.map((c, i) => ({
+      site_id: id,
+      site_label: label,
+      local_id: identifiantUnique(),
+      code_barre: c.codeBarre,
+      article: c.article,
+      modele: c.modele,
+      couleur: c.couleur,
+      couleur_code: c.couleurCode,
+      taille: c.taille,
+      manche: c.manche,
+      of: c.of,
+      type: etiquettes[i].type,
+      source: c.source,
+      quantite: (quantites && quantites[i]) || 1,
+      filename: fichier,
+      genere_at: genereAt,
+    }));
+    const attente = lire(CLE_ATTENTE, []).concat(lignes);
+    let liste = attente.slice(-MAX_ATTENTE);
+    while (!ecrire(CLE_ATTENTE, liste) && liste.length > 1) liste = liste.slice(Math.floor(liste.length / 2));
+    envoyerFileSupabase();
+  }
+
+  /** Envoie la file d'attente par lots ; les doublons sont ignorés côté base. */
+  async function envoyerFileSupabase() {
+    if (!supabaseActif() || envoiEnCours) return rendreCloud();
+    let attente = lire(CLE_ATTENTE, []);
+    if (!attente.length) return rendreCloud();
+    envoiEnCours = true;
+    rendreCloud();
+    try {
+      while (attente.length) {
+        const lot = attente.slice(0, TAILLE_LOT_ENVOI);
+        await appelRpc("enregistrer_generations", { lignes: lot });
+        const envoyes = new Set(lot.map((l) => l.local_id));
+        attente = lire(CLE_ATTENTE, []).filter((l) => !envoyes.has(l.local_id));
+        ecrire(CLE_ATTENTE, attente);
+      }
+      etatCloud = { ok: true, message: "" };
+      alerteCloudAffichee = false;
+    } catch (e) {
+      etatCloud = { ok: false, message: e.message };
+      if (!alerteCloudAffichee) {
+        alerteCloudAffichee = true;
+        toast(
+          "Enregistrement Supabase en attente",
+          `${e.message} — les générations restent sur ce poste et partiront automatiquement.`,
+          "info"
+        );
+      }
+    } finally {
+      envoiEnCours = false;
+      rendreCloud();
+    }
+  }
+
+  function rendreCloud() {
+    const p = $("#pastille-cloud");
+    const actif = supabaseActif();
+    p.hidden = !actif;
+    $("#btn-export-supabase").hidden = !actif;
+    if (!actif) return;
+    const enAttente = lire(CLE_ATTENTE, []).length;
+    const site = siteCourant().label;
+    p.classList.remove("pastille-ok", "pastille-attente");
+    if (envoiEnCours) {
+      p.textContent = "Supabase · envoi…";
+    } else if (enAttente > 0) {
+      p.classList.add("pastille-attente");
+      p.textContent = `Supabase · ${fr(enAttente)} en attente`;
+    } else if (etatCloud.ok) {
+      p.classList.add("pastille-ok");
+      p.textContent = "Supabase ✓";
+    } else {
+      p.textContent = "Supabase";
+    }
+    p.title =
+      `Enregistrement des générations dans Supabase — site : ${site}` +
+      (enAttente ? `\n${fr(enAttente)} ligne(s) en attente d'envoi${etatCloud.message ? ` (${etatCloud.message})` : ""}` : "") +
+      (etatCloud.ok && !enAttente ? "\nDernier envoi réussi." : "");
+  }
+
+  // Export de l'historique complet (tous les postes) ------------------------
+  const CLE_CODE_EXPORT = "clement-code-export";
+
+  function ouvrirExport() {
+    const code = lire(CLE_CODE_EXPORT, "");
+    $("#exp-code").value = code;
+    $("#exp-memoriser").checked = !!code;
+    $("#exp-erreur").hidden = true;
+    $("#dlg-export").showModal();
+    if (!code) $("#exp-code").focus();
+  }
+
+  async function telechargerHistorique() {
+    const code = $("#exp-code").value.trim();
+    const depuis = $("#exp-depuis").value || null;
+    const jusqua = $("#exp-jusqua").value || null;
+    const erreur = (m) => {
+      $("#exp-erreur").hidden = false;
+      $("#exp-erreur").innerHTML = `${icone("alert")}${esc(m)}`;
+    };
+    if (!code) return erreur("Saisissez le code d'accès.");
+    if (depuis && jusqua && depuis > jusqua) return erreur("La date de début est après la date de fin.");
+    const bouton = $("#exp-ok");
+    occupe(bouton, true, "Téléchargement…");
+    $("#exp-erreur").hidden = true;
+    try {
+      await envoyerFileSupabase(); // inclure les générations encore en attente sur ce poste
+      const lignes = [];
+      for (let debut = 0; ; debut += 1000) {
+        const lot = await appelRpc("exporter_generations", { code_acces: code, depuis, jusqua }, `?limit=1000&offset=${debut}`);
+        lignes.push(...(lot || []));
+        if (!lot || lot.length < 1000) break;
+      }
+      ecrire(CLE_CODE_EXPORT, $("#exp-memoriser").checked ? code : "");
+      const nom = `historique_etiquettes_${N.horodatageFichier()}.csv`;
+      telecharger(construireCsvHistorique(lignes), nom, "text/csv;charset=utf-8");
+      $("#dlg-export").close();
+      toast("Historique téléchargé", `${pluriel(lignes.length, "ligne")} — ${nom}`);
+    } catch (e) {
+      if (e.status === 403 || /code d.acc/i.test(e.message)) {
+        ecrire(CLE_CODE_EXPORT, "");
+        erreur("Code d'accès invalide.");
+      } else {
+        erreur(e.message);
+      }
+    } finally {
+      occupe(bouton, false);
+      bouton.disabled = false;
+    }
+  }
+
+  /** CSV « ; » + BOM pour Excel ; OF et code-barres protégés (zéros, 13 chiffres). */
+  function construireCsvHistorique(lignes) {
+    const champ = (v) => {
+      const s = String(v == null ? "" : v);
+      return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const texteExcel = (v) => (v ? `="${String(v).replace(/"/g, "")}"` : "");
+    const dateFr = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(d || "") ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}` : d || "");
+    const entete = ["Date", "Heure", "Site", "Fichier", "FAB / SPE", "Modèle", "Article", "Couleur", "Code couleur", "Taille", "Manche", "OF", "Type", "Code-barres", "Quantité"];
+    const rows = lignes.map((l) =>
+      [
+        champ(dateFr(l.date_generation)), champ(l.heure), champ(l.site), champ(l.fichier), champ(l.source),
+        champ(l.modele), champ(l.article), champ(l.couleur), champ(l.couleur_code), champ(l.taille),
+        champ(l.manche), texteExcel(l.of), champ(l.type), texteExcel(l.code_barre), champ(l.quantite),
+      ].join(";")
+    );
+    return "\uFEFF" + [entete.join(";"), ...rows].join("\r\n") + "\r\n";
   }
 
   function resume(valeurs) {
@@ -7473,9 +7756,9 @@ Ce fichier a été généré automatiquement par l'application
         modele: resume(valides.map((e) => e.modele)),
         of: resume(valides.map((e) => e.of)),
         imprimante: imprimante || null,
-        etiquettes: valides.map((e, i) => Object.assign({}, e, { quantite: (quantites && quantites[i]) || 1 })),
+        etiquettes: valides.map((e, i) => Object.assign({}, e, { quantite: (quantites && quantites[i]) || 1, brut: etiquettes[i].brut })),
       });
-      memoriserEtiquettes(valides);
+      enregistrerDansSupabase(resoudreEtMemoriser(valides, etiquettes.map((e) => e.brut)), valides, quantites, paquet.filename);
       memoriserOfs(valides.map((e) => e.of));
       const n = paquet.labelCount, c = paquet.copiesTotales;
       toast(
@@ -7631,6 +7914,7 @@ Ce fichier a été généré automatiquement par l'application
     const nom = `etiquette_${sur(etat.article)}_${sur(etat.couleur)}_${sur(etat.taille)}_${sur(etat.of)}.txt`;
     telecharger(N.exportTxt(e), nom, "text/plain;charset=utf-8");
     journaliser({ kind: "TXT", filename: nom, labelsCount: 1, modele: e.modele, of: e.of });
+    enregistrerDansSupabase(resoudreEtMemoriser([e], [e.brut]), [e], [1], nom);
     toast("Fichier .TXT exporté", `${nom} — format historique « Charger… » de Zebra Designer conservé.`);
   }
 
@@ -7842,7 +8126,7 @@ Ce fichier a été généré automatiquement par l'application
   function rendreBoutonImprimante() {
     const b = $("#btn-imprimante");
     b.innerHTML = icone("sliders") + (etat.imprimante.active ? '<span class="point" aria-hidden="true"></span>' : "");
-    b.title = `Préférences d'imprimante — cible actuelle : ${imprimanteCible() || N.IMPRIMANTE_DEFAUT}`;
+    b.title = `Préférences — site : ${siteCourant().label} · imprimante : ${imprimanteCible() || N.IMPRIMANTE_DEFAUT}`;
   }
 
   function changerVue(vue) {
@@ -7853,6 +8137,7 @@ Ce fichier a été généré automatiquement par l'application
   }
 
   function ouvrirImprimante() {
+    $("#imp-site").value = etat.site;
     $("#imp-active").checked = etat.imprimante.active;
     $("#imp-nom").value = etat.imprimante.nom;
     $("#imp-dpi").value = etat.imprimante.dpi;
@@ -7872,11 +8157,15 @@ Ce fichier a été généré automatiquement par l'application
     }
     etat.imprimante = prefs;
     ecrire("clement-imprimante", prefs);
+    etat.site = $("#imp-site").value.trim().replace(/\s+/g, " ").slice(0, 60);
+    ecrire("clement-site", etat.site);
     $("#dlg-imprimante").close();
     rendreBoutonImprimante();
+    rendreCloud();
     toast(
       "Préférences enregistrées",
-      prefs.active ? `Imprimante cible intégrée aux .NLBL : ${prefs.nom} (${prefs.dpi} dpi).` : `Imprimante du modèle conservée (${N.IMPRIMANTE_DEFAUT}).`
+      `Site : ${siteCourant().label}. ` +
+        (prefs.active ? `Imprimante cible intégrée aux .NLBL : ${prefs.nom} (${prefs.dpi} dpi).` : `Imprimante du modèle conservée (${N.IMPRIMANTE_DEFAUT}).`)
     );
   }
 
@@ -7899,6 +8188,24 @@ Ce fichier a été généré automatiquement par l'application
     $("#btn-imprimante").addEventListener("click", ouvrirImprimante);
     $("#imp-active").addEventListener("change", majChampsImprimante);
     $("#imp-enregistrer").addEventListener("click", enregistrerImprimante);
+    $("#imp-site").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        enregistrerImprimante();
+      }
+    });
+    $("#btn-export-supabase").addEventListener("click", ouvrirExport);
+    $("#exp-ok").addEventListener("click", telechargerHistorique);
+    $("#exp-code").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        telechargerHistorique();
+      }
+    });
+    window.addEventListener("online", envoyerFileSupabase);
+    setInterval(() => {
+      if (lire(CLE_ATTENTE, []).length) envoyerFileSupabase();
+    }, 60000);
     $("#imp-nom").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -8188,6 +8495,8 @@ Ce fichier a été généré automatiquement par l'application
     rendre();
     rendreJournal();
     majCompteurColisage();
+    rendreCloud();
+    envoyerFileSupabase();
   }
 
   demarrer().catch((e) => {
